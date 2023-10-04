@@ -8,8 +8,10 @@ prior_num <- 100
 prior_list <- death_list[1:prior_num]
 prior_mean <- mean(prior_list)
 prior_var <- var(prior_list)
-prior_a <- abs(((1 - prior_mean) / prior_var - 1 / prior_mean) * prior_mean ^ 2)
-prior_b <- abs(prior_a * (1 / prior_mean - 1))
+# prior_a <- abs(((1 - prior_mean) / prior_var - 1 / prior_mean) * prior_mean ^ 2)
+prior_a <- 35
+# prior_b <- abs(prior_a * (1 / prior_mean - 1))
+prior_b <- 65
 
 theta_list <- c()
 theta_std <- c()
