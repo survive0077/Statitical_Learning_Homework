@@ -26,7 +26,8 @@ for (i in names(variable_list))
   cor_list <- c(cor_list, cor_v)
 }
 cor_frame <- data.frame(variable_name=names(variable_list), cor_value=cor_list)
-cor_frame <- cor_frame[order(cor_frame$cor_value, decreasing = TRUE),]
+# sort by abs
+cor_frame <- cor_frame[order(abs(cor_frame$cor_value), decreasing = TRUE),]
 
 
 # use cor(use = "pairwise.complete.obs") to drop NA

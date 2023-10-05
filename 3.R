@@ -57,7 +57,7 @@ ggplot(data = df1, mapping = aes(x = observations, y = theta))+
   geom_hline(aes(yintercept=theta_mean), colour="#BB0000", linetype="dashed")+
   # coord_cartesian(xlim =c(0, ((length(death_list) - begin) / step)), ylim = c(0.308, 1))+
   scale_x_continuous(breaks=c(0,25,50,75,100,125),labels=c(0,25,50,75,100,125)*50,)+
-  geom_text(aes(x=100,y=0.4),label="theta=0.323254",cex=6)+
+  geom_text(aes(x=100,y=0.4),label="theta=0.323009",cex=6)+
   theme(panel.grid=element_blank(), panel.background=element_rect(fill='transparent', color='black'),legend.position = c(0.15,0.85))+
   geom_ribbon(data = df2, mapping = aes(ymin=theta_down,ymax=theta_up),fill="grey70",alpha=0.3)
 
