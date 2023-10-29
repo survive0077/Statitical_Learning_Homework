@@ -1,5 +1,5 @@
 library(ggplot2)
-
+library(ggpubr)
 
 df <- read.csv('./mydata.csv')
 
@@ -63,13 +63,13 @@ function_continuous_process <- function(interval=10, dolist, name, if_3sigma=FAL
   d$state <- factor(d$state,level=c(1,0))
   
   pic <- ggplot(data=d)+
-    geom_col(aes(x=d$intvl, y=d$observations,fill=state))+
+    geom_col(aes(x=intvl, y=observations,fill=state))+
     scale_fill_discrete(labels=c(1,0))+
     labs(x=name,y='observations(x10^2)')+
     theme(panel.grid=element_blank(), panel.background=element_rect(fill='transparent', color='black'),legend.position = c(0.15,0.85))+
-    geom_line(aes(x=d$intvl,y=d$ratio*10),group=2,size=1.2)+
-    geom_point(aes(x=d$intvl,y=d$ratio*10,size=1.2),show.legend=FALSE)+
-    geom_text(aes(x=d$intvl,y=d$ratio*10+0.5),label=d$ratio,cex=4)+
+    geom_line(aes(x=intvl,y=ratio*10),group=2,size=1.2)+
+    geom_point(aes(x=intvl,y=ratio*10,size=1.2),show.legend=FALSE)+
+    geom_text(aes(x=intvl,y=ratio*10+0.5),label=d$ratio,cex=4)+
     scale_y_continuous(name ='observations(x10^2)',sec.axis = sec_axis(~./10,name='ratio'))
   
   return(pic)
@@ -90,13 +90,13 @@ function_discrete_process <- function(dolist, name)
   
   pic <- ggplot(data=d,aes(x=characteristic,y=observations),fill=state)+
             geom_col(aes(x=characteristic, y=observations,fill=state))+
-            labs(x=name,y='observations(x10^3)')+
+            labs(x=d$name,y='observations(x10^3)')+
             scale_fill_discrete(labels=c(1,0))+
             theme(axis.text.x = element_text(size = 8, angle = 10, hjust = 1), panel.grid=element_blank(), 
                   panel.background=element_rect(fill='transparent', color='black'),legend.position = c(0.15,0.85))+
-            geom_line(aes(x=characteristic,y=ratio*6),group=2,size=1.2)+
-            geom_point(aes(x=characteristic,y=ratio*6,size=1.2),show.legend=FALSE)+
-            geom_text(aes(x=characteristic,y=ratio*6+0.2),label=d$ratio,cex=5)+
+            geom_line(aes(x=d$characteristic,y=d$ratio*6),group=2,size=1.2)+
+            geom_point(aes(x=d$characteristic,y=d$ratio*6,size=1.2),show.legend=FALSE)+
+            geom_text(aes(x=d$characteristic,y=d$ratio*6+0.2),label=d$ratio,cex=5)+
             scale_y_continuous(name ='observations(x10^3)',sec.axis = sec_axis(~./6,name='ratio'))
   
   return (pic)
@@ -128,3 +128,7 @@ pic4
 
 pic5 <- function_discrete_process(df$ethnicity, name="ethnicity")
 pic5
+
+ggarrange(pic1,pic2,pic3,pic4,pic5,
+          lables=c("A", "B", "C", "D", "E"),
+          ncol = 2,nrow=3)

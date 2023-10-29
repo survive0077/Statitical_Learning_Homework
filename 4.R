@@ -16,7 +16,6 @@ sd <- c(2,1)
 Gaussian_random <- vector()
 norm1_list <- vector()
 norm2_list <- vector()
-alpha <- 0.6
 
 for (i in c(1:len))
 {
@@ -66,19 +65,19 @@ for (i in c(1:len))
   if (death_list[i])
   {
     if (f[i] < 0.5)
-      error_2 <- error_2 + 1
+      error_1 <- error_1 + 1
   }
   else
   {
     if (f[i] >= 0.5)
-      error_1 <- error_1 + 1
+      error_2 <- error_2 + 1
   }
 }
 
-# type1_error = 0.02275393
-type1_error <- error_1 / (len - sum(death_list))
-# type2_error = 0.05572139
-type2_error <- error_2 / sum(death_list)
+# type1_error = 0.05572139
+type1_error <- error_1 / sum(death_list)
+# type2_error = 0.02275393
+type2_error <- error_2 / (len - sum(death_list))
 
 pred <- ifelse(f >= 0.5, "P", "N")
 df2 <- data.frame(ifdead=death_list, pred=pred, f=f)
@@ -118,24 +117,38 @@ err <- 1000000
 
 while(err > 0.05)
 {
+  # -------------- E step --------------
   for (i in c(1:len))
   {
     temp_1 <- lambda_eva * dnorm(Gaussian_random[i], mean=mu_eva[1], sd=sd_eva[1])
     temp_2 <- (1 - lambda_eva) * dnorm(Gaussian_random[i], mean=mu_eva[2], sd=sd_eva[2])
+    # calculate the probability of each point belong to each Gaussian
+    # sum to 1
     gamma1_eva[i] <- temp_1 / (temp_1 + temp_2)
     gamma2_eva[i] <- 1 - gamma1_eva[i]
   }
+  # -------------- M step --------------
+  # the number of points each Gaussian has
   n_1 <- sum(gamma1_eva) + 0.001
   n_2 <- sum(gamma2_eva) + 0.001
+  
+  # backup old value
   lambda_before <- lambda_eva
-  lambda_eva <- round((n_1 / len), 2)
   mu_before <- mu_eva
   sd_before <- sd_eva
   
+  # update the ratio of each Gaussian in completed data
+  lambda_eva <- round((n_1 / len), 2)
+  
+  # update the mean of each Gaussian
   mu_eva[1] <- sum(gamma1_eva * Gaussian_random) / n_1
   mu_eva[2] <- sum(gamma2_eva * Gaussian_random) / n_2
+  
+  # update the std of each Gaussian
   sd_eva[1] <- sqrt(sum(gamma1_eva * (Gaussian_random - mu_eva[1]) ^ 2) / n_1)
   sd_eva[2] <- sqrt(sum(gamma2_eva * (Gaussian_random - mu_eva[2]) ^ 2) / n_2)
+  
+  # calculate the error
   err <- sum(abs(mu_eva - mu_before)) + sum(abs(sd_eva - sd_before))
 }
 mu_eva
@@ -146,6 +159,8 @@ x <- seq(-20,20,0.1)
 re <- lambda_eva*dnorm(x,mu_eva[1],sd_eva[1]) + (1-lambda_eva)*dnorm(x,mu_eva[2],sd_eva[2])
 plot(density(df1$guassian))
 lines(x,re,col="red",lwd=2)
+legend("topright",legend = c("origin", "EM"), lwd=1, col = c("black", "red"))
+
 
 # lambda = 0.32  lambda_eva = 0.34
 # mu = c(5,0)    mu_eva = c(4.8399788 -0.0249322)
@@ -161,7 +176,7 @@ tab_ <- xtabs(~ifdead+pred_,data = df3)
 # ifdead    N    P
 #      0 4128  135
 #      1  102 1908
-pred2 <- prediction(predictions = f_,labels = df3$ifdead)
+pred2 <- prediction(predictions = f_,labels = df3$ifdead,label.ordering = c(0,1))
 auc_ <- performance(pred2, "auc")@y.values[[1]]
 pref_ <-  performance(pred2,"tpr","fpr")
 plot(pref_,lwd=3)
