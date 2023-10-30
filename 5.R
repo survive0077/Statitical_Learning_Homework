@@ -1,7 +1,10 @@
 library(ggplot2)
 library(ggcorrplot)
+library(mice)
 
 df <- read.csv('./mydata.csv')
+# missing pattern
+md.pattern(df[c(0:100),c(80:100)],rotate.names =  TRUE)
 ifdead <- df$hospital_expire_flag
 variable_list <- df[-c(1:20)]
 
