@@ -1,6 +1,7 @@
 library(ggplot2)
 library(ggpubr)
 library(ROCR)
+library(MASS)
 
 df <- read.csv('./mydata.csv')
 death_list <- df$hospital_expire_flag
@@ -157,10 +158,9 @@ lambda_eva
 
 x <- seq(-20,20,0.1)
 re <- lambda_eva*dnorm(x,mu_eva[1],sd_eva[1]) + (1-lambda_eva)*dnorm(x,mu_eva[2],sd_eva[2])
-plot(density(df1$guassian))
+plot(density(df1$guassian), main="EM result",lwd=3)
 lines(x,re,col="red",lwd=2)
 legend("topright",legend = c("origin", "EM"), lwd=1, col = c("black", "red"))
-
 
 # lambda = 0.32  lambda_eva = 0.34
 # mu = c(5,0)    mu_eva = c(4.8399788 -0.0249322)
@@ -181,4 +181,50 @@ auc_ <- performance(pred2, "auc")@y.values[[1]]
 pref_ <-  performance(pred2,"tpr","fpr")
 plot(pref_,lwd=3)
 lines(pref@x.values[[1]],pref@y.values[[1]],col="red")
+legend("bottomright",legend = c("origin", "EM"), lwd=1, col = c("black", "red"))
 
+
+# Q4.4 --------------------------------------------------------------------
+
+ratio <- 0.8
+split_point <- ceiling(ratio * len)
+data_set <- data.frame(ifdead=death_list, gau_rand=Gaussian_random)
+train_set <- data_set[1:split_point,]
+test_set <- data_set[(split_point + 1):len,]
+rownames(test_set) <- c(1:dim(test_set)[1])
+
+# Linear/Fisher Discriminant Analysis
+fit_lda  <- lda(ifdead ~ gau_rand, data = train_set)
+lda_train_result <- as.numeric(predict(fit_lda)$posterior[,1])
+lda_test_result <- as.numeric(predict(fit_lda, test_set)$posterior[,1])
+
+pred_lda_train <- prediction(predictions = lda_train_result,labels = train_set$ifdead,label.ordering = c(1,0))
+pred_lda_test <- prediction(predictions = lda_test_result,labels = test_set$ifdead,label.ordering = c(1,0))
+pref_lda_train <-  performance(pred_lda_train,"tpr","fpr")
+pref_lda_test <-  performance(pred_lda_test,"tpr","fpr")
+
+# logit
+fit_logit <- glm(ifdead ~ -1+gau_rand, family = binomial(link = "logit"), data = train_set)
+logit_train_result <- predict.glm(fit_logit, type="response")
+logit_test_result <- predict.glm(fit_logit, test_set, type="response")
+
+pred_logit_train <- prediction(predictions = logit_train_result,labels = train_set$ifdead,label.ordering = c(0,1))
+pred_logit_test <- prediction(predictions = logit_test_result,labels = test_set$ifdead,label.ordering = c(0,1))
+pref_logit_train <-  performance(pred_logit_train,"tpr","fpr")
+pref_logit_test <-  performance(pred_logit_test,"tpr","fpr")
+
+# ROC
+attach(mtcars)
+opar <- par(no.readonly = TRUE)
+par(mfrow=c(1, 2))
+
+plot(pref_lda_train,lwd=3,main="ROC on Train Set")
+lines(pref_logit_train@x.values[[1]],pref_logit_train@y.values[[1]],col="red",lwd=2)
+legend("bottomright",legend = c("LDA", "Logit"), lwd=1, col = c("black", "red"))
+
+plot(pref_lda_test,lwd=3,main="ROC on Test Set")
+lines(pref_logit_test@x.values[[1]],pref_logit_test@y.values[[1]],col="red",lwd=2)
+legend("bottomright",legend = c("LDA", "Logit"), lwd=1, col = c("black", "red"))
+
+par(opar)
+detach(mtcars)

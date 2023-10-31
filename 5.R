@@ -1,12 +1,21 @@
 library(ggplot2)
 library(ggcorrplot)
 library(mice)
+library(correlation)
+library(dplyr)
+
 
 df <- read.csv('./mydata.csv')
+ifdead <- df$hospital_expire_flag
+
 # missing pattern
 md.pattern(df[c(0:100),c(80:100)],rotate.names =  TRUE)
-ifdead <- df$hospital_expire_flag
-variable_list <- df[-c(1:20)]
+
+# delete variables which miss more than 40% 
+threshold <- 0.40
+missing_p <- colMeans(is.na(df[-c(1:20)]))
+variable_list <- df[-c(1:20)] %>% select(which(missing_p <= threshold))  
+
 
 cal_cor <- function(dolist)
 {
@@ -15,18 +24,22 @@ cal_cor <- function(dolist)
   na_bool <- is.na(do_df$vb)
   do_df <- do_df[!na_bool,]
   
-  value <- cor(do_df$flag, do_df$vb)
+  corr <- correlation(do_df, method = "auto", include_factors = TRUE)
+  value_method <- c(corr[[3]], corr[[10]])
   
-  return(round(value, 3))
+  return(value_method)
 }
 
 cor_list <- c()
+method_list <- c()
 for (i in names(variable_list))
 {
   # single variable data frame to vector
   dolist <- c(t(variable_list[i]))
-  cor_v <- cal_cor(dolist)
-  cor_list <- c(cor_list, cor_v)
+  value_method <- cal_cor(dolist)
+  cor_list <- c(cor_list, round(as.numeric(value_method[1]), 3))
+  method_list <- c(method_list, value_method[2])
+  
 }
 cor_frame <- data.frame(variable_name=names(variable_list), cor_value=cor_list)
 # sort by abs

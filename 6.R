@@ -4,10 +4,11 @@ df <- read.csv('./mydata.csv')
 obs_num <- dim(df)[1]
 
 selected <- c("hospital_expire_flag", 
-              "bilirubin_indirect_min", "bilirubin_indirect_max", 
-              "aniongap_min", "aniongap_max", 
-              "fibrinogen_min", "fibrinogen_max", 
-              "ggt_min", "ggt_max", "spo2_min", "ptt_max")
+              "aniongap_min", "aniongap_max",
+              "spo2_min", "ptt_max",
+              "bilirubin_total_max", "bilirubin_total_min", 
+               "sbp_min", "mbp_min",
+              "temperature_min", "bicarbonate_min")
 ratio <- 0.8
 split_point <- ceiling(ratio * obs_num)
 data_set <- df[selected]
@@ -17,11 +18,14 @@ rownames(test_set) <- c(1:dim(test_set)[1])
 
 
 # use all 10 variables to fit ---------------------------------------------
-
-fit_all <- glm(hospital_expire_flag ~ bilirubin_indirect_min+bilirubin_indirect_max+
-                 aniongap_min+aniongap_max+fibrinogen_min+fibrinogen_max+
-                 ggt_min+ggt_max+spo2_min+ptt_max, family = binomial(link = "logit"), data = train_set)
+# fit without intercept
+fit_all <- glm(hospital_expire_flag ~ -1+
+                 aniongap_min+aniongap_max+
+                 bilirubin_total_max+bilirubin_total_min+
+                 temperature_min+bicarbonate_min+
+                 spo2_min+ptt_max+sbp_min+mbp_min, family = binomial(link = "logit"), data = train_set)
 summary(fit_all)
+coef(fit_all)
 predprob_all <- predict.glm(fit_all, test_set, type="response")
 result_all <- na.omit(predprob_all)
 
@@ -31,7 +35,7 @@ fit_single <- function(nm)
 {
   data_temp <- data.frame(train_set$hospital_expire_flag, train_set[nm])
   colnames(data_temp) <- c("ifdead", "do")
-  fit_temp <- glm(ifdead ~ do, family = binomial(link = "logit"), data = data_temp)
+  fit_temp <- glm(ifdead ~ -1+do, family = binomial(link = "logit"), data = data_temp)
   
   return(fit_temp)
 }
@@ -45,7 +49,10 @@ pred_single <- function(nm, model)
   return(pred_now)
 }
 
-
-fit_0 <- fit_single(selected[2])
-pred_0 <-pred_single(selected[2], fit_0)
+do_num <- 11
+selected[do_num]
+fit_0 <- fit_single(selected[do_num])
+summary(fit_0)
+coef(fit_0)
+pred_0 <-pred_single(selected[do_num], fit_0)
 
