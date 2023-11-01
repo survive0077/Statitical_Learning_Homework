@@ -1,11 +1,14 @@
 df <- read.csv('./completed_df.csv')
 # 选前十个相关性最强的变量————————————
 library(correlation)
-cor_matrix <- correlation(df, method = "auto") # 计算Point-Biserial Correlation
-cor_with_hospital_expire_flag <- cor_matrix[cor_matrix$Parameter1 == "hospital_expire_flag", ] # 获取与出院状态相关性的绝对值（不区分正负）
-sorted_cor <- cor_with_hospital_expire_flag[order(abs(cor_with_hospital_expire_flag$r), decreasing = TRUE), ]  #排序
-top_10_variables <- head(sorted_cor$Parameter2, 10) # 获取与出院状态相关性最高的前 10 个变量的名称
-print(top_10_variables)   # 输出前 10 个变量名
+
+top_10_variables <- c("hospital_expire_flag", 
+                      "aniongap_min", "aniongap_max",
+                      "spo2_min", "ptt_max",
+                      "bilirubin_total_max", "bilirubin_total_min", 
+                      "sbp_min", "mbp_min",
+                      "temperature_min", "bicarbonate_min") # 获取与出院状态相关性最高的前 10 个变量的名称
+
 selected_columns <- df[top_10_variables]
 data <- cbind(df[1],selected_columns)
 
