@@ -176,6 +176,8 @@ tab_ <- xtabs(~ifdead+pred_,data = df3)
 # ifdead    N    P
 #      0 4128  135
 #      1  102 1908
+
+# label.ordering = c(negative, positive)
 pred2 <- prediction(predictions = f_,labels = df3$ifdead,label.ordering = c(0,1))
 auc_ <- performance(pred2, "auc")@y.values[[1]]
 pref_ <-  performance(pred2,"tpr","fpr")
@@ -195,11 +197,15 @@ rownames(test_set) <- c(1:dim(test_set)[1])
 
 # Linear/Fisher Discriminant Analysis
 fit_lda  <- lda(ifdead ~ gau_rand, data = train_set)
-lda_train_result <- as.numeric(predict(fit_lda)$posterior[,1])
-lda_test_result <- as.numeric(predict(fit_lda, test_set)$posterior[,1])
+lda_train_result <- as.numeric(
+  predict(fit_lda)$posterior[,2]) / 
+  (predict(fit_lda)$posterior[,1] + predict(fit_lda)$posterior[,2])
+lda_test_result <- as.numeric(
+  predict(fit_lda, test_set)$posterior[,2] / 
+    (predict(fit_lda, test_set)$posterior[,1] + predict(fit_lda, test_set)$posterior[,2]))
 
-pred_lda_train <- prediction(predictions = lda_train_result,labels = train_set$ifdead,label.ordering = c(1,0))
-pred_lda_test <- prediction(predictions = lda_test_result,labels = test_set$ifdead,label.ordering = c(1,0))
+pred_lda_train <- prediction(predictions = lda_train_result,labels = train_set$ifdead,label.ordering = c(0,1))
+pred_lda_test <- prediction(predictions = lda_test_result,labels = test_set$ifdead,label.ordering = c(0,1))
 pref_lda_train <-  performance(pred_lda_train,"tpr","fpr")
 pref_lda_test <-  performance(pred_lda_test,"tpr","fpr")
 
